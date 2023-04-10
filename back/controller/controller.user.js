@@ -69,10 +69,68 @@ const updateCV = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+const followUser = async (req, res) => {
+  const id = req.params.id;
+  const { currentId } = req.body;
+  console.log(id, currentId)
+  if (currentId === id) {
+    res.status(403).json("Action Forbidden");
+  } else {
+    try {
+      const followUser = await Users.findById(id);
+      const followingUser = await Users.findById(currentId);
+
+      if (!followUser.followers.includes(currentId)) {
+        await followUser.updateOne({ $push: { followers: currentId } });
+        await followingUser.updateOne({ $push: { following: id } });
+        res.status(200).json("User followed!");
+      } else {
+        res.status(403).json("you are already following this id");
+      }
+    } catch (error) {
+      console.log(error)
+      res.status(500).json(error);
+    }
+  }
+};
+
+// Unfollow a User
+// changed
+ const unfollowUser = async (req, res) => {
+  const id = req.params.id;
+  const { currentId } = req.body;
+
+  if(currentId === id)
+  {
+    res.status(403).json("Action Forbidden")
+  }
+  else{
+    try {
+      const unFollowUser = await Users.findById(id)
+      const unFollowingUser = await Users.findById(currentId)
+
+
+      if (unFollowUser.followers.includes(currentId))
+      {
+        await unFollowUser.updateOne({$pull : {followers: currentId}})
+        await unFollowingUser.updateOne({$pull : {following: id}})
+        res.status(200).json("Unfollowed Successfully!")
+      }
+      else{
+        res.status(403).json("You are not following this User")
+      }
+    } catch (error) {
+      res.status(500).json(error)
+    }
+  }
+};
+
 module.exports = {
   updatePassword,
   updateProfile,
   updateCoverPhoto,
   updatePicture,
   updateCV,
+  followUser,
+  unfollowUser,
 };
